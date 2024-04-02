@@ -69,13 +69,13 @@ class DatabaseLink:
         """
         if not use_pandas:
             for table in CSVWriters.file_names:
-                query = f"COPY {table} FROM '{data_path}/{table}-{date}.csv' WITH (FORMAT csv)"
+                query = f"COPY {table} FROM '{self.data_path}/{table}-{date}.csv' WITH (FORMAT csv)"
                 try:
                     self.cursor.execute(query)
                 except CharacterNotInRepertoire:
                     self.conn.rollback()
                     logging.warn(f'Illegal character in table {table} for {date}, removing null bytes and retrying')
-                    os.system(f"{sed_name} -i 's/\\x00//g' {data_path}/{table}-{date}.csv")
+                    os.system(f"{self.sed_name} -i 's/\\x00//g' {self.data_path}/{table}-{date}.csv")
                     logging.info(f'Removed null bytes from {table}')
                     self.cursor.execute(query)
                 except Exception:
@@ -85,7 +85,7 @@ class DatabaseLink:
                 self.conn.commit()
         else:
             for table in CSVWriters.file_names:
-                csv_filepath = f'{data_path}/{table}-{date}.csv'
+                csv_filepath = f'{self.data_path}/{table}-{date}.csv'
                 try:
                     df = pd.read_csv(csv_filepath)
                     df.to_sql(table, self.conn, if_exists='append')
