@@ -4,6 +4,7 @@ orjson
 msgspec
 pandas
 tqdm
+pandas
 pycountry
 geopy
 unzip
