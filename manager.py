@@ -35,6 +35,47 @@ class Manager:
         self.DATABASE_PORT = database_port
 
 
+    def run_serie(self):
+
+        with DatabaseLink(username=self.DATABASE_USERNAME, password=self.DATABASE_PASSWORD,
+            database=self.DATABASE_NAME, host=self.DATABASE_HOST, port=self.DATABASE_PORT,
+            sed_name=self.sed_name, data_path=self.data_path) as db:
+            db.create_tables()
+            
+            converter = JSONToCSVConverter(writer=None)
+            while date := next(self.dates_to_download, None):
+
+                # --------------------------------------------------------------------------
+                # download and descompress
+                # --------------------------------------------------------------------------
+                self.download_json(date)
+                self.decompress_json(date)
+                # --------------------------------------------------------------------------
+
+                # --------------------------------------------------------------------------
+                # convert to csv
+                # --------------------------------------------------------------------------
+                converter.writer = CSVWriters(date, self.data_path)
+                # at the first of the month, reset sets to not use too much memory
+                if date[-5:] == '01-23':
+                    converter.reset_added_sets()
+                
+                file_name = f'{self.data_path}/{date}.json'
+                logging.info(f'Writing csv for {date}')
+                with open(file_name, 'rb') as f:
+                    converter.write_events(f)
+                self.remove_json(date)
+                converter.writer.close()
+                # --------------------------------------------------------------------------
+                
+                # --------------------------------------------------------------------------
+                # 
+                # --------------------------------------------------------------------------
+                db.insert_csvs_into_db(date)
+                self.remove_inserted_csvs(date)
+                # --------------------------------------------------------------------------
+
+
 
     def run_download(self):
         """
@@ -59,13 +100,14 @@ class Manager:
         Run the csv writing process. Blocks when queue is empty/full.
         :return: None
         """
-        with DatabaseLink(username=self.DATABASE_USERNAME, password=self.DATABASE_PASSWORD, 
-            database=self.DATABASE_NAME, host=self.DATABASE_HOST, port=self.DATABASE_PORT, sed_name=self.sed_name) as db:
+        with DatabaseLink(username=self.DATABASE_USERNAME, password=self.DATABASE_PASSWORD,
+            database=self.DATABASE_NAME, host=self.DATABASE_HOST, port=self.DATABASE_PORT,
+            sed_name=self.sed_name, data_path=self.data_path) as db:
             db.create_tables()
 
         converter = JSONToCSVConverter(writer=None)
         while date := self.decompressed_queue.get():
-            converter.writer = CSVWriters(date)
+            converter.writer = CSVWriters(date, self.data_path)
             # at the first of the month, reset sets to not use too much memory
             if date[-5:] == '01-23':
                 converter.reset_added_sets()
@@ -86,8 +128,9 @@ class Manager:
         """
         while date := self.written_queue.get():
             logging.info(f'Copying {date} into database')
-            with DatabaseLink(username=self.DATABASE_USERNAME, password=self.DATABASE_PASSWORD, 
-                database=self.DATABASE_NAME, host=self.DATABASE_HOST, port=self.DATABASE_PORT, sed_name=self.sed_name) as db:
+            with DatabaseLink(username=self.DATABASE_USERNAME, password=self.DATABASE_PASSWORD,
+                database=self.DATABASE_NAME, host=self.DATABASE_HOST, port=self.DATABASE_PORT,
+                data_path=self.data_path, sed_name=self.sed_name) as db:
                 db.insert_csvs_into_db(date)
             self.remove_inserted_csvs(date)
 
@@ -138,8 +181,7 @@ class Manager:
         dates_to_download.reverse()
         return iter(dates_to_download)
 
-    @staticmethod
-    def remove_json(date_to_download):
+    def remove_json(self, date_to_download):
         """
         Remove the json file for the given date.
         :param date_to_download: date to remove
@@ -148,8 +190,7 @@ class Manager:
         path = f'{self.data_path}/{date_to_download}'
         os.remove(f'{path}.json')
 
-    @staticmethod
-    def remove_inserted_csvs(day):
+    def remove_inserted_csvs(self, day):
         """
         Remove the csv files for the given day.
         :param day: day to remove
