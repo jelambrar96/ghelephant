@@ -24,11 +24,7 @@ class DatabaseLink:
         self.host = host
         self.port = port
         self.data_path = data_path
-        os_name = platform.system()
-        if sed_name is None:
-            self.sed_name = 'sed' if os_name == 'Linux' else 'gsed'
-        else:
-            self.sed_name = sed_name
+        self.sed_name = sed_name
 
     def __enter__(self):
         self.__init__(username=self.username, password=self.password, 
@@ -75,7 +71,10 @@ class DatabaseLink:
                 except CharacterNotInRepertoire:
                     self.conn.rollback()
                     logging.warn(f'Illegal character in table {table} for {date}, removing null bytes and retrying')
-                    os.system(f"{self.sed_name} -i 's/\\x00//g' {self.data_path}/{table}-{date}.csv")
+                    if self.sed_name is None:
+                        DatabaseLink.__remove_null_chars(f"{self.data_path}/{table}-{date}.csv")
+                    else:
+                        os.system(f"{self.sed_name} -i 's/\\x00//g' {self.data_path}/{table}-{date}.csv")
                     logging.info(f'Removed null bytes from {table}')
                     self.cursor.execute(query)
                 except Exception:
@@ -94,3 +93,11 @@ class DatabaseLink:
                     logging.error(f'Error copying table {table} for {date} into database')
                     logging.error(traceback.format_exc())                
         logging.info(f'Finished copying {date} into database')
+
+    @staticmethod
+    def __remove_null_chars( filepath):
+        with open(filepath, 'r', encoding='utf-8') as archivo_entrada:
+            contenido = archivo_entrada.read()
+        contenido_sin_nulos = contenido.replace('\x00', '')
+        with open(filepath, 'w', encoding='utf-8') as archivo_salida:
+            archivo_salida.write(contenido_sin_nulos)
