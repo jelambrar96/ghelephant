@@ -3,6 +3,7 @@ import os
 import logging
 import datetime
 from queue import Queue  
+from zipfile import ZipFile
 from json_to_csv_converter import JSONToCSVConverter
 from csv_writers import CSVWriters
 from database_link import DatabaseLink
@@ -162,7 +163,9 @@ class Manager:
         if os.path.isfile(f'{path}.json'):
             return
         logging.info(f'Decompressing {date_to_download}')
-        os.system(f'gunzip {path}.json.gz')
+        # os.system(f'gunzip {path}.json.gz')
+        with ZipFile(path, 'r') as zf:
+            zf.extract()
         self.decompressed_queue.put(date_to_download)
 
     def __dates_to_download(self):
