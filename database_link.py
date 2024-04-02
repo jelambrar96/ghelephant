@@ -4,7 +4,6 @@ import platform
 import logging
 import traceback
 import pandas as pd
-from variables import *
 from csv_writers import CSVWriters
 from psycopg2.errors import CharacterNotInRepertoire
 
