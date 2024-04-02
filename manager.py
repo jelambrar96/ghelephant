@@ -196,4 +196,6 @@ class Manager:
         :param day: day to remove
         :return: None
         """
-        os.system(f'rm {self.data_path}/*-{day}.csv')
+        # os.system(f'rm {self.data_path}/*-{day}.csv')
+        for fn in CSVWriters.file_names:
+            os.remove(f'{self.data_path}/{fn}-{day}.csv')
