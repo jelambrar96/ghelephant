@@ -72,7 +72,7 @@ class Manager:
                 # --------------------------------------------------------------------------
                 # 
                 # --------------------------------------------------------------------------
-                db.insert_csvs_into_db(date)
+                db.insert_csvs_into_db(date, use_pandas=True)
                 self.remove_inserted_csvs(date)
                 # --------------------------------------------------------------------------
 
@@ -132,7 +132,7 @@ class Manager:
             with DatabaseLink(username=self.DATABASE_USERNAME, password=self.DATABASE_PASSWORD,
                 database=self.DATABASE_NAME, host=self.DATABASE_HOST, port=self.DATABASE_PORT,
                 data_path=self.data_path, sed_name=self.sed_name) as db:
-                db.insert_csvs_into_db(date)
+                db.insert_csvs_into_db(date, use_pandas=True)
             self.remove_inserted_csvs(date)
 
     def download_json(self, date_to_download):
