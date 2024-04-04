@@ -1,13 +1,13 @@
 import requests
 import json
 import os.path
-import subprocess
 import time
 import pycountry
 import pandas as pd
 from tqdm import tqdm
 from geopy.geocoders import Nominatim
 from geopy.exc import GeocoderTimedOut
+from git import Repo 
 
 class Processing:
     """
@@ -91,7 +91,8 @@ class Processing:
         :param repo_name: name of the repo to clone.
         :return: None
         """
-        subprocess.run(['git', '-C', self.repo_path, 'clone', f'https://github.com/{repo_name}.git'])
+        # subprocess.run(['git', '-C', self.repo_path, 'clone', f'https://github.com/{repo_name}.git'])
+        Repo.clone(f'https://github.com/{repo_name}.git', self.repo_path)
 
     def fetch_user_details(self, username):
         """

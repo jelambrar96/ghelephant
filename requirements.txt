@@ -10,3 +10,4 @@ geopy
 unzip
 sed
 python-dotenv
+gitpython
