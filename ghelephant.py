@@ -65,7 +65,8 @@ def main():
     elif args.start_date and args.end_date:
         start_year, start_month, start_day = args.start_date.split('-')
         end_year, end_month, end_day = args.end_date.split('-')
-        assert int(start_year) >= 2015, 'Start year must be 2015 or later.'
+        if start_year < 2015:
+            raise ValueError('Start year must be 2015 or later.')
         manager = Manager(start_year=int(start_year), start_month=int(start_month), start_day=int(start_day),
                             end_year=int(end_year), end_month=int(end_month), end_day=int(end_day),
                             data_path=DATA_PATH, sed_name=SED_NAME,
