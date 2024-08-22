@@ -12,8 +12,8 @@ class DatabaseLink:
     """
     Class to link to the database and perform operations on it.
     """
-    def __init__(self, username="ghelephant", password="ghelephant", 
-                database="ghelephant", host="localhost", port=5432, 
+    def __init__(self, username, password, 
+                database, host, port,
                 sed_name=None, data_path="."):
         self.conn = psycopg2.connect(database=database, user=username,
             password=password, host=host, port=port)
